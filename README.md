@@ -277,4 +277,16 @@ Project Type
 
 Personal Data Analytics Project
 
+## 🛠️ Version Control Rescue Notes
+
+During GitHub publishing, I faced conflicts between my local project structure and the remote branch.  
+To ensure **no structural changes** and preserve all datasets, dashboards, notebooks, and scripts, I followed these steps:
+
+1. **Aborted rebase** when Git flagged deletions (`git rebase --abort`).  
+2. **Verified local files** (`data/`, `excel_dashboard/`, `notebook/`, `sql/`, `screenshot/python/`) remained intact.  
+3. **Staged and committed** everything again (`git add . && git commit`).  
+4. **Force pushed local truth** (`git push origin main --force`) so GitHub mirrors my exact portfolio structure.  
+
+👉 Outcome: My project structure stayed unchanged, and the repo now reflects the complete workflow — datasets, Excel dashboard, Jupyter notebook, SQL scripts, and Python visualizations.
+
 This project demonstrates an end-to-end approach to transforming raw e-commerce data into analytical findings and actionable business recommendations.
