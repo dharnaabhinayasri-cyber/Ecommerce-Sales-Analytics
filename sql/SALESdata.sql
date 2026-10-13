@@ -352,3 +352,26 @@ SELECT
 FROM salesdata
 GROUP BY YEAR(`Order Date`)
 ORDER BY Sales_Year;
+
+-- 1. Check the record count
+SELECT COUNT(*) AS row_count
+FROM salesdata;
+
+-- 2. Validate the core financial KPIs
+SELECT
+    ROUND(SUM(Sales), 2) AS total_sales,
+    ROUND(SUM(Profit), 2) AS total_profit,
+    ROUND(SUM(Profit) / NULLIF(SUM(Sales), 0) * 100, 2)
+        AS profit_margin_pct
+FROM salesdata;
+
+-- 3. Identify loss-making sub-categories
+SELECT
+    Category,
+    `Sub-Category`,
+    SUM(Sales) AS total_sales,
+    SUM(Profit) AS total_profit
+FROM salesdata
+GROUP BY Category, `Sub-Category`
+HAVING SUM(Profit) < 0
+ORDER BY total_profit ASC;
