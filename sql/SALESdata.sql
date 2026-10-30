@@ -1,155 +1,375 @@
+-- 1. Select database
 USE ecommerce_analysis;
+
+-- 2. Verify current database
+SELECT DATABASE();
+
+-- 3. Show available tables
+SHOW TABLES;
+
+-- 4. Check table structure
+DESCRIBE salesdata;
+
+-- 5. Check first 10 records
+SELECT *
+FROM salesdata
+LIMIT 10;
+
+-- 1. Total rows
 SELECT COUNT(*) AS Total_Rows
 FROM salesdata;
+
+-- 2. Total columns
 SELECT COUNT(*) AS Total_Columns
 FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_SCHEMA = 'ecommerce_analysis'
-  AND TABLE_NAME = 'salesdata';
-  DESCRIBE salesdata;
-  SELECT *
-FROM salesdata
-LIMIT 10;
-SELECT 
-    SUM(Sales) AS Total_Revenue
-FROM salesdata;
-SELECT 
-    SUM(Profit) AS Total_Profit
-FROM salesdata;
+AND TABLE_NAME = 'salesdata';
+
+-- 3. Unique order IDs
 SELECT COUNT(DISTINCT `Order ID`) AS Total_Orders
 FROM salesdata;
-SELECT 
+
+-- 4. Unique customers
+SELECT COUNT(DISTINCT `Customer Name`) AS Total_Customers
+FROM salesdata;
+
+-- 5. Date range
+SELECT
+    MIN(`Order Date`) AS First_Order_Date,
+    MAX(`Order Date`) AS Last_Order_Date
+FROM salesdata;
+
+-- 1. Check missing values
+SELECT
+    SUM(CASE WHEN Sales IS NULL THEN 1 ELSE 0 END)
+        AS Missing_Sales,
+
+    SUM(CASE WHEN Profit IS NULL THEN 1 ELSE 0 END)
+        AS Missing_Profit,
+
+    SUM(CASE WHEN Quantity IS NULL THEN 1 ELSE 0 END)
+        AS Missing_Quantity,
+
+    SUM(CASE WHEN Discount IS NULL THEN 1 ELSE 0 END)
+        AS Missing_Discount,
+
+    SUM(CASE WHEN `Order Date` IS NULL THEN 1 ELSE 0 END)
+        AS Missing_Order_Date,
+
+    SUM(CASE WHEN Region IS NULL THEN 1 ELSE 0 END)
+        AS Missing_Region,
+
+    SUM(CASE WHEN Category IS NULL THEN 1 ELSE 0 END)
+        AS Missing_Category
+
+FROM salesdata;
+
+-- 2. Check duplicate Row IDs
+SELECT
+    `Row ID`,
+    COUNT(*) AS Duplicate_Count
+FROM salesdata
+GROUP BY `Row ID`
+HAVING COUNT(*) > 1;
+
+-- 3. Check invalid negative sales
+SELECT *
+FROM salesdata
+WHERE Sales < 0;
+
+-- 4. Check negative quantities
+SELECT *
+FROM salesdata
+WHERE Quantity < 0;
+
+-- 5. Check discount range
+SELECT *
+FROM salesdata
+WHERE Discount < 0 OR Discount > 1;
+
+USE ecommerce_analysis;
+
+-- 1. Total Sales
+SELECT
+    ROUND(SUM(Sales), 2) AS Total_Sales
+FROM salesdata;
+
+-- 2. Total Profit
+SELECT
+    ROUND(SUM(Profit), 2) AS Total_Profit
+FROM salesdata;
+
+-- 3. Total Orders
+SELECT
+    COUNT(DISTINCT `Order ID`) AS Order_Count
+FROM salesdata;
+
+-- 4. Profit Margin
+SELECT
+    ROUND(
+        SUM(Profit) / NULLIF(SUM(Sales), 0) * 100,
+        2
+    ) AS Profit_Margin_Percentage
+FROM salesdata;
+
+-- 5. Average Order Value
+SELECT
+    ROUND(
+        SUM(Sales) / NULLIF(COUNT(DISTINCT `Order ID`), 0),
+        2
+    ) AS Average_Order_Value
+FROM salesdata;
+
+-- 6. Total Quantity
+SELECT
     SUM(Quantity) AS Total_Quantity
 FROM salesdata;
-SELECT 
-    SUM(Sales) / COUNT(DISTINCT `Order ID`) AS Average_Order_Value
+
+SELECT
+
+    ROUND(SUM(Sales), 2) AS Total_Sales,
+
+    ROUND(SUM(Profit), 2) AS Total_Profit,
+
+    COUNT(DISTINCT `Order ID`) AS Total_Orders,
+
+    SUM(Quantity) AS Total_Quantity,
+
+    ROUND(
+        SUM(Profit) / NULLIF(SUM(Sales), 0) * 100,
+        2
+    ) AS Profit_Margin_Percentage,
+
+    ROUND(
+        SUM(Sales) /
+        NULLIF(COUNT(DISTINCT `Order ID`), 0),
+        2
+    ) AS Average_Order_Value
+
 FROM salesdata;
-SELECT 
+
+-- Category-wise Sales, Profit and Profit Margin
+
+SELECT
     Category,
-    SUM(Sales) AS Total_Sales
+
+    ROUND(SUM(Sales), 2) AS Total_Sales,
+
+    ROUND(SUM(Profit), 2) AS Total_Profit,
+
+    ROUND(
+        SUM(Profit) / NULLIF(SUM(Sales), 0) * 100,
+        2
+    ) AS Profit_Margin_Percentage
+
 FROM salesdata
+
 GROUP BY Category
-ORDER BY Total_Sales DESC
-LIMIT 1;
-SELECT 
-    Category,
-    SUM(Profit) AS Total_Profit
-FROM salesdata
-GROUP BY Category
-ORDER BY Total_Profit DESC
-LIMIT 1;
-SELECT 
-    Category,
-    SUM(Profit) AS Total_Profit
-FROM salesdata
-GROUP BY Category
-ORDER BY Total_Profit ASC
-LIMIT 1;
-SELECT 
-    Category,
-    SUM(Sales) AS Total_Sales,
-    SUM(Profit) AS Total_Profit,
-    SUM(Profit) / SUM(Sales) AS Profit_Margin
-FROM salesdata
-GROUP BY Category
+
 ORDER BY Total_Profit DESC;
-SELECT 
-    `Sub-Category`,
-    SUM(Profit) AS Total_Profit
+
+SELECT
+    Category,
+    ROUND(SUM(Sales), 2) AS Total_Sales
+
 FROM salesdata
-GROUP BY `Sub-Category`
-HAVING SUM(Profit) < 0
-ORDER BY Total_Profit ASC;
-SELECT 
-    `Sub-Category`,
-    SUM(Sales) AS Total_Sales,
-    SUM(Profit) AS Total_Profit,
-    SUM(Profit) / SUM(Sales) AS Profit_Margin
-FROM salesdata
-GROUP BY `Sub-Category`
-ORDER BY Total_Profit ASC;
-SELECT 
-    `Product Name`,
-    SUM(Sales) AS Total_Sales,
-    SUM(Profit) AS Total_Profit
-FROM salesdata
-GROUP BY `Product Name`
-HAVING SUM(Sales) > 10000
-   AND SUM(Profit) < 1000
-ORDER BY Total_Sales DESC;
-SELECT 
-    Region,
-    SUM(Sales) AS Total_Sales
-FROM salesdata
-GROUP BY Region
+
+GROUP BY Category
+
 ORDER BY Total_Sales DESC
+
 LIMIT 1;
-SELECT 
-    Region,
-    SUM(Profit) AS Total_Profit
+
+SELECT
+    Category,
+    ROUND(SUM(Profit), 2) AS Total_Profit
+
 FROM salesdata
-GROUP BY Region
-ORDER BY Total_Profit DESC
+
+GROUP BY Category
+
+ORDER BY Total_Profit ASC
+
 LIMIT 1;
-SELECT 
-    Region,
-    SUM(Sales) AS Total_Sales,
-    SUM(Profit) AS Total_Profit,
-    SUM(Profit) / SUM(Sales) AS Profit_Margin
+
+-- Total Profit by Sub-Category
+
+SELECT
+    `Sub-Category`,
+
+    ROUND(SUM(Profit), 2) AS Total_Profit
+
 FROM salesdata
+
+GROUP BY `Sub-Category`
+
+ORDER BY Total_Profit DESC;
+
+SELECT
+    `Sub-Category`,
+
+    ROUND(SUM(Sales), 2) AS Total_Sales,
+
+    ROUND(SUM(Profit), 2) AS Total_Profit,
+
+    ROUND(
+        SUM(Profit) / NULLIF(SUM(Sales), 0) * 100,
+        2
+    ) AS Profit_Margin_Percentage
+
+FROM salesdata
+
+GROUP BY `Sub-Category`
+
+HAVING SUM(Profit) < 0
+
+ORDER BY Total_Profit ASC;
+
+SELECT
+    Category,
+    `Sub-Category`,
+
+    ROUND(SUM(Sales), 2) AS Total_Sales,
+
+    ROUND(SUM(Profit), 2) AS Total_Profit,
+
+    ROUND(
+        SUM(Profit) / NULLIF(SUM(Sales), 0) * 100,
+        2
+    ) AS Profit_Margin_Percentage
+
+FROM salesdata
+
+GROUP BY Category, `Sub-Category`
+
+ORDER BY Total_Profit ASC;
+
+-- Regional Sales and Profitability
+
+SELECT
+    Region,
+
+    ROUND(SUM(Sales), 2) AS Total_Sales,
+
+    ROUND(SUM(Profit), 2) AS Total_Profit,
+
+    ROUND(
+        SUM(Profit) / NULLIF(SUM(Sales), 0) * 100,
+        2
+    ) AS Profit_Margin_Percentage
+
+FROM salesdata
+
 GROUP BY Region
-ORDER BY Profit_Margin ASC
+
+ORDER BY Total_Sales DESC;
+
+SELECT
+    Region,
+    ROUND(SUM(Sales), 2) AS Total_Sales
+
+FROM salesdata
+
+GROUP BY Region
+
+ORDER BY Total_Sales DESC
+
 LIMIT 1;
-SELECT 
+
+SELECT
     Region,
-    SUM(Sales) AS Total_Sales,
-    SUM(Profit) AS Total_Profit,
-    ROUND(SUM(Profit) / SUM(Sales) * 100, 2) AS Profit_Margin_Percent
+    ROUND(SUM(Sales), 2) AS Total_Sales
+
 FROM salesdata
+
 GROUP BY Region
-ORDER BY Profit_Margin_Percent ASC;
-SELECT 
-    `Customer Name`,
-    SUM(Sales) AS Total_Revenue
+
+ORDER BY Total_Sales ASC
+
+LIMIT 1;
+
+SELECT
+    Region,
+
+    ROUND(SUM(Sales), 2) AS Total_Sales,
+
+    ROUND(SUM(Profit), 2) AS Total_Profit,
+
+    ROUND(
+        SUM(Profit) / NULLIF(SUM(Sales), 0) * 100,
+        2
+    ) AS Profit_Margin_Percentage
+
 FROM salesdata
-GROUP BY `Customer Name`
-ORDER BY Total_Revenue DESC
-LIMIT 10;
-SELECT 
-    `Customer Name`,
-    SUM(Profit) AS Total_Profit
+
+GROUP BY Region
+
+ORDER BY Profit_Margin_Percentage ASC
+
+LIMIT 1;
+
+SELECT
+    Segment,
+
+    ROUND(SUM(Sales), 2) AS Total_Sales,
+
+    ROUND(SUM(Profit), 2) AS Total_Profit,
+
+    COUNT(DISTINCT `Order ID`) AS Total_Orders,
+
+    ROUND(
+        SUM(Profit) / NULLIF(SUM(Sales), 0) * 100,
+        2
+    ) AS Profit_Margin_Percentage
+
 FROM salesdata
-GROUP BY `Customer Name`
-ORDER BY Total_Profit DESC
-LIMIT 10;
-SELECT 
-    `Customer Name`,
-    COUNT(DISTINCT `Order ID`) AS Total_Orders
+
+GROUP BY Segment
+
+ORDER BY Total_Sales DESC;
+
+USE ecommerce_analysis;
+
+SELECT
+    DATE_FORMAT(`Order Date`, '%Y-%m-01') AS Month_Start,
+
+    ROUND(SUM(Sales), 2) AS Total_Sales,
+
+    ROUND(SUM(Profit), 2) AS Total_Profit
+
 FROM salesdata
-GROUP BY `Customer Name`
-HAVING COUNT(DISTINCT `Order ID`) > 1
-ORDER BY Total_Orders DESC;
-SELECT 
-    AVG(Customer_Revenue) AS Average_Revenue_Per_Customer
-FROM
-(
-    SELECT 
-        `Customer Name`,
-        SUM(Sales) AS Customer_Revenue
-    FROM salesdata
-    GROUP BY `Customer Name`
-) AS CustomerSummary;
-SELECT 
-    DATE_FORMAT(`Order Date`, '%Y-%m') AS Month,
-    SUM(Sales) AS Total_Sales
+
+GROUP BY DATE_FORMAT(`Order Date`, '%Y-%m-01')
+
+ORDER BY Month_Start;
+
+SELECT
+
+    YEAR(`Order Date`) AS Sales_Year,
+
+    ROUND(SUM(Sales), 2) AS Total_Sales,
+
+    ROUND(SUM(Profit), 2) AS Total_Profit,
+
+    ROUND(
+        SUM(Profit) / NULLIF(SUM(Sales), 0) * 100,
+        2
+    ) AS Profit_Margin_Percentage
+
 FROM salesdata
-GROUP BY DATE_FORMAT(`Order Date`, '%Y-%m')
-ORDER BY Month;
+
+GROUP BY YEAR(`Order Date`)
+
+ORDER BY Sales_Year;
+
 WITH YearlySales AS
 (
-    SELECT 
+    SELECT
         YEAR(`Order Date`) AS Sales_Year,
         SUM(Sales) AS Total_Sales
+
     FROM salesdata
+
     GROUP BY YEAR(`Order Date`)
 ),
 
@@ -158,220 +378,180 @@ YearlyComparison AS
     SELECT
         Sales_Year,
         Total_Sales,
+
         LAG(Total_Sales) OVER (
             ORDER BY Sales_Year
         ) AS Previous_Year_Sales
+
     FROM YearlySales
 )
 
 SELECT
     Sales_Year,
-    Total_Sales,
-    Previous_Year_Sales,
+
+    ROUND(Total_Sales, 2) AS Total_Sales,
+
+    ROUND(Previous_Year_Sales, 2) AS Previous_Year_Sales,
+
     ROUND(
         (Total_Sales - Previous_Year_Sales)
         / NULLIF(Previous_Year_Sales, 0) * 100,
         2
-    ) AS YoY_Growth_Percent
+    ) AS YoY_Growth_Percentage
+
 FROM YearlyComparison
+
 ORDER BY Sales_Year;
-SELECT 
-    AVG(Discount) AS Average_Discount
-FROM salesdata;
-SELECT 
-    Discount,
-    SUM(Sales) AS Total_Sales,
-    SUM(Profit) AS Total_Profit,
-    SUM(Profit) / SUM(Sales) AS Profit_Margin
-FROM salesdata
-GROUP BY Discount
-ORDER BY Discount;
-SELECT 
-    `Product Name`,
-    AVG(Discount) AS Average_Discount
-FROM salesdata
-GROUP BY `Product Name`
-HAVING AVG(Discount) > 0.30
-ORDER BY Average_Discount DESC;
-SELECT 
-    `Product Name`,
-    SUM(Sales) AS Total_Sales,
-    SUM(Profit) AS Total_Profit,
-    AVG(Discount) AS Average_Discount
-FROM salesdata
-GROUP BY `Product Name`
-HAVING SUM(Profit) < 0
-   AND AVG(Discount) > 0.20
-ORDER BY Total_Profit ASC;
-SELECT COUNT(*) AS Total_Rows
-FROM salesdata;
-SELECT COUNT(*) AS Total_Columns
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_SCHEMA = 'ecommerce_analysis'
-  AND TABLE_NAME = 'salesdata';
-  SELECT 
-    SUM(Sales) AS Total_Revenue,
-    SUM(Profit) AS Total_Profit,
-    COUNT(DISTINCT `Order ID`) AS Total_Orders,
-    SUM(Quantity) AS Total_Quantity,
-    ROUND(
-        SUM(Profit) / NULLIF(SUM(Sales), 0) * 100,
-        2
-    ) AS Profit_Margin_Percent
-FROM salesdata;
-SELECT 
-    Category,
-    ROUND(SUM(Sales), 2) AS Total_Sales,
-    ROUND(SUM(Profit), 2) AS Total_Profit,
-    ROUND(
-        SUM(Profit) / NULLIF(SUM(Sales), 0) * 100,
-        2
-    ) AS Profit_Margin_Percent
-FROM salesdata
-GROUP BY Category
-ORDER BY Total_Profit DESC;
-SELECT 
-    Discount,
-    ROUND(SUM(Sales), 2) AS Total_Sales,
-    ROUND(SUM(Profit), 2) AS Total_Profit,
-    ROUND(
-        SUM(Profit) / NULLIF(SUM(Sales), 0) * 100,
-        2
-    ) AS Profit_Margin_Percent
-FROM salesdata
-GROUP BY Discount
-ORDER BY Discount;
+
 SELECT
-    Category,
+
     Discount,
-    SUM(Sales) AS Total_Sales,
-    SUM(Profit) AS Total_Profit,
-    ROUND(
-        SUM(Profit) / NULLIF(SUM(Sales), 0) * 100,
-        2
-    ) AS Profit_Margin_Percent
-FROM salesdata
-GROUP BY Category, Discount
-ORDER BY Category, Discount;
-SELECT 
-    `Product Name`,
-    AVG(Discount) AS Average_Discount
-FROM salesdata
-GROUP BY `Product Name`
-HAVING AVG(Discount) > 0.30
-ORDER BY Average_Discount DESC;
-SELECT 
-    `Product Name`,
-    SUM(Sales) AS Total_Sales,
-    SUM(Profit) AS Total_Profit,
-    AVG(Discount) AS Average_Discount,
-    ROUND(SUM(Profit) / NULLIF(SUM(Sales), 0) * 100, 2) AS Profit_Margin_Percent
-FROM salesdata
-GROUP BY `Product Name`
-HAVING AVG(Discount) > 0.30
-ORDER BY Average_Discount DESC;
-SELECT 
-    `Product Name`,
-    SUM(Sales) AS Total_Sales,
-    SUM(Profit) AS Total_Profit,
-    AVG(Discount) AS Average_Discount,
-    ROUND(SUM(Profit) / NULLIF(SUM(Sales), 0) * 100, 2) AS Profit_Margin_Percent
-FROM salesdata
-GROUP BY `Product Name`
-HAVING AVG(Discount) > 0.30
-   AND SUM(Profit) < 0
-ORDER BY Total_Profit ASC;
-SELECT 
-    Discount,
-    COUNT(*) AS Total_Rows,
-    SUM(Sales) AS Total_Sales,
-    SUM(Profit) AS Total_Profit,
-    ROUND(SUM(Profit) / NULLIF(SUM(Sales), 0) * 100, 2) AS Profit_Margin_Percent
-FROM salesdata
-GROUP BY Discount
-ORDER BY Discount;
-SELECT 
-    `Product Name`,
-    SUM(Sales) AS Total_Sales,
-    SUM(Profit) AS Total_Profit,
-    AVG(Discount) AS Average_Discount
-FROM salesdata
-GROUP BY `Product Name`
-HAVING SUM(Profit) < 0
-   AND AVG(Discount) > 0.20
-ORDER BY Total_Profit ASC;
-SELECT
-    Discount,
+
     COUNT(*) AS Total_Transactions,
+
     ROUND(SUM(Sales), 2) AS Total_Sales,
+
     ROUND(SUM(Profit), 2) AS Total_Profit,
-    ROUND(SUM(Profit) / NULLIF(SUM(Sales), 0) * 100, 2) AS Profit_Margin_Percent
+
+    ROUND(AVG(Profit), 2) AS Average_Profit,
+
+    ROUND(
+        SUM(Profit) / NULLIF(SUM(Sales), 0) * 100,
+        2
+    ) AS Profit_Margin_Percentage
+
 FROM salesdata
+
 GROUP BY Discount
+
 ORDER BY Discount;
+
 SELECT
+    ROUND(AVG(Discount) * 100, 2) AS Average_Discount_Percentage
+FROM salesdata;
+
+SELECT
+
     `Product Name`,
+
     ROUND(SUM(Sales), 2) AS Total_Sales,
+
     ROUND(SUM(Profit), 2) AS Total_Profit,
-    ROUND(AVG(Discount) * 100, 2) AS Average_Discount_Percent,
-    ROUND(SUM(Profit) / NULLIF(SUM(Sales), 0) * 100, 2) AS Profit_Margin_Percent
+
+    ROUND(AVG(Discount) * 100, 2)
+        AS Average_Discount_Percentage,
+
+    ROUND(
+        SUM(Profit) / NULLIF(SUM(Sales), 0) * 100,
+        2
+    ) AS Profit_Margin_Percentage
+
 FROM salesdata
+
 GROUP BY `Product Name`
-HAVING SUM(Sales) > 5000
-   AND SUM(Profit) < 0
-ORDER BY Total_Profit ASC;
-SELECT 
-    Category,
-    SUM(Sales) AS Total_Sales,
-    SUM(Profit) AS Total_Profit,
-    ROUND(SUM(Profit) / SUM(Sales) * 100, 2) AS Profit_Margin_Percent
-FROM salesdata
-GROUP BY Category
-ORDER BY Total_Profit DESC;
-SELECT 
-    Region,
-    SUM(Sales) AS Total_Sales,
-    SUM(Profit) AS Total_Profit,
-    ROUND(SUM(Profit) / SUM(Sales) * 100, 2) AS Profit_Margin_Percent
-FROM salesdata
-GROUP BY Region
-ORDER BY Profit_Margin_Percent ASC;
-SELECT 
-    Discount,
-    SUM(Sales) AS Total_Sales,
-    SUM(Profit) AS Total_Profit,
-    ROUND(SUM(Profit) / SUM(Sales) * 100, 2) AS Profit_Margin_Percent
-FROM salesdata
-GROUP BY Discount
-ORDER BY Discount;
-SELECT 
-    YEAR(`Order Date`) AS Sales_Year,
-    SUM(Sales) AS Total_Sales,
-    SUM(Profit) AS Total_Profit,
-    ROUND(SUM(Profit) / SUM(Sales) * 100, 2) AS Profit_Margin_Percent
-FROM salesdata
-GROUP BY YEAR(`Order Date`)
-ORDER BY Sales_Year;
 
--- 1. Check the record count
-SELECT COUNT(*) AS row_count
-FROM salesdata;
-
--- 2. Validate the core financial KPIs
-SELECT
-    ROUND(SUM(Sales), 2) AS total_sales,
-    ROUND(SUM(Profit), 2) AS total_profit,
-    ROUND(SUM(Profit) / NULLIF(SUM(Sales), 0) * 100, 2)
-        AS profit_margin_pct
-FROM salesdata;
-
--- 3. Identify loss-making sub-categories
-SELECT
-    Category,
-    `Sub-Category`,
-    SUM(Sales) AS total_sales,
-    SUM(Profit) AS total_profit
-FROM salesdata
-GROUP BY Category, `Sub-Category`
 HAVING SUM(Profit) < 0
-ORDER BY total_profit ASC;
+AND AVG(Discount) > 0.20
+
+ORDER BY Total_Profit ASC;
+
+SELECT
+
+    CASE
+        WHEN Discount = 0 THEN '0% - No Discount'
+        WHEN Discount <= 0.10 THEN '1-10%'
+        WHEN Discount <= 0.20 THEN '11-20%'
+        WHEN Discount <= 0.30 THEN '21-30%'
+        ELSE 'Above 30%'
+    END AS Discount_Band,
+
+    COUNT(*) AS Total_Transactions,
+
+    ROUND(SUM(Sales), 2) AS Total_Sales,
+
+    ROUND(SUM(Profit), 2) AS Total_Profit,
+
+    ROUND(AVG(Profit), 2) AS Average_Profit,
+
+    ROUND(
+        SUM(Profit) / NULLIF(SUM(Sales), 0) * 100,
+        2
+    ) AS Profit_Margin_Percentage
+
+FROM salesdata
+
+GROUP BY Discount_Band
+
+ORDER BY
+    MIN(Discount);
+    
+SELECT
+
+    `Customer Name`,
+
+    ROUND(SUM(Sales), 2) AS Total_Revenue
+
+FROM salesdata
+
+GROUP BY `Customer Name`
+
+ORDER BY Total_Revenue DESC
+
+LIMIT 10;
+
+SELECT
+
+    `Customer Name`,
+
+    ROUND(SUM(Profit), 2) AS Total_Profit
+
+FROM salesdata
+
+GROUP BY `Customer Name`
+
+ORDER BY Total_Profit DESC
+
+LIMIT 10;
+
+SELECT
+
+    `Customer Name`,
+
+    COUNT(DISTINCT `Order ID`) AS Total_Orders,
+
+    ROUND(SUM(Sales), 2) AS Total_Revenue,
+
+    ROUND(SUM(Profit), 2) AS Total_Profit
+
+FROM salesdata
+
+GROUP BY `Customer Name`
+
+HAVING COUNT(DISTINCT `Order ID`) > 1
+
+ORDER BY Total_Orders DESC;
+
+SELECT
+
+    ROUND(SUM(Sales), 2) AS Total_Sales,
+
+    ROUND(SUM(Profit), 2) AS Total_Profit,
+
+    ROUND(
+        SUM(Profit) / NULLIF(SUM(Sales), 0) * 100,
+        2
+    ) AS Profit_Margin_Percentage,
+
+    COUNT(DISTINCT `Order ID`) AS Order_Count,
+
+    ROUND(
+        SUM(Sales) /
+        NULLIF(COUNT(DISTINCT `Order ID`), 0),
+        2
+    ) AS Average_Order_Value,
+
+    SUM(Quantity) AS Total_Quantity,
+
+    COUNT(*) AS Total_Records
+
+FROM salesdata;
